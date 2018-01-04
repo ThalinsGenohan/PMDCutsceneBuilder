@@ -1,0 +1,3 @@
+﻿  ScriptUI.cpp
+c:\users\thefi\documents\visual studio 2017\projects\pmd cutscene builder\pmd cutscene builder\scriptui.cpp(154): warning C4101: 'selection': unreferenced local variable
+  PMD Cutscene Builder.vcxproj -> C:\Users\thefi\documents\visual studio 2017\Projects\PMD Cutscene Builder\Debug\PMD Cutscene Builder.exe
