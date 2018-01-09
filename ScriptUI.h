@@ -1,5 +1,3 @@
-//ScriptUI.h - Declares the script-building UI class
-
 #pragma once
 
 #include <SFML/Graphics.hpp>
@@ -10,27 +8,27 @@ class ScriptUI
 	{
 		enum ButtonType
 		{
-			NOBUTTON,					// Null value
-			NEWBUTTON,					// New file
-			OPENBUTTON,					// Open file
-			SAVEBUTTON,					// Save file
-			SAVEASBUTTON,				// Save file as
-			CONFIGBUTTON,				// Configure program/file
+			NOBUTTON,
+			NEWBUTTON,
+			OPENBUTTON,
+			SAVEBUTTON,
+			SAVEASBUTTON,
+			CONFIGBUTTON,
 
-			ADDBUTTON,					// Add script action
-			REMOVEBUTTON,				// Remove selected action
-			EDITBUTTON,					// Edit selected action
-			UPBUTTON,					// Move selected action up
-			DOWNBUTTON,					// Move selected action down
+			ADDBUTTON,
+			REMOVEBUTTON,
+			EDITBUTTON,
+			UPBUTTON,
+			DOWNBUTTON,
 
-			RUNBUTTON,					// Run the current script
+			RUNBUTTON,
 
-			SCROLLUPBUTTON,				// Scroll the textbox up
-			SCROLLDOWNBUTTON,			// Scroll the textbox down
+			SCROLLUPBUTTON,
+			SCROLLDOWNBUTTON,
 
 
-			ADDPORTRAIT,				// Add portrait action
-			ADDDIALOGUE					// Add dialogue action
+			ADDPORTRAIT,
+			ADDDIALOGUE
 		};
 		ButtonType type;						// What the button does when pressed
 
@@ -38,179 +36,286 @@ class ScriptUI
 		sf::Rect<float> rect;					// Mouse-detection rectangle
 		sf::Texture texture;					// Texture for shape
 
-		sf::Vector2f pos;						// Position of the button
-		sf::Vector2f size;						// Size of the button
+		sf::Vector2f pos;
+		sf::Vector2f size;
 
-		/**
-		 *	@brief Constructor
-		 *	@param type What the button will do
-		 *	@param pos Position of the button
-		 *	@param size Size of the button
-		 *	@param filename The image to be loaded for the button
-		 */
+
 		Button(ButtonType type, sf::Vector2f pos, sf::Vector2f size, std::string filename = "");
-		
-		/** 
-		 *	@brief Checks if the mouse is hovering over a button and turns the button red if true.
-		 *	@param m Position of the mouse
-		 */
+
+		////////////////////////////////////
+		/// \brief Handles button highlights
+		///
+		/// \param m Position of the mouse
+		////////////////////////////////////
 		bool hover(sf::Vector2f m);
 
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 	};
-	std::vector<Button> buttons;		// All buttons on the main window
+	std::vector<Button> buttons;
 
 	struct Command
 	{
 		enum CommandType
 		{
-			NOCOMMAND,		// Null value
-			PORTRAIT,		// Portrait action
-			DIALOGUE		// Dialogue action
+			NOCOMMAND,
+			PORTRAIT,
+			DIALOGUE
 			//...
 		};
-		CommandType type;			// What the command will do
+		CommandType type;
 
-		int ID;						// ID of the command (position on the list)
+		int ID;
 
-		sf::Rect<float> rect;		// Rect for detecting mouse clicks for selection
-		sf::Text text;				// Text to be displayed in the main window for this command
+		sf::Rect<float> rect;
+		sf::Text text;
 
-		/**
-		 *	@brief Constructor
-		 *	@param ID ID of the command (position on the list)
-		 *	@param type What the command will do
-		 */
+
 		explicit Command(int ID, CommandType type);
 
-		/**
-		 *	@brief Pulls up the editing window for the command
-		 */
+		//////////////////////////////////////////////////////
+		/// \brief Pulls up the editing window for the command
+		///
+		//////////////////////////////////////////////////////
 		void edit();
 	};
-	std::vector<Command> commands;		// All the commands written
+	std::vector<Command> commands;
 
-
-	struct CommandList : sf::Drawable
+	struct Select : sf::Drawable
 	{
-		int selected;					// ID of the selection (-1 if none)
+		int selected;
 
-		sf::Rect<float> rect;			// Rect of the textbox
-		sf::RectangleShape shape;		// Visible shape of the textbox
+		sf::Rect<float> rect;
+		sf::RectangleShape shape;
 
 		struct ScrollBar : Drawable
 		{
-			sf::Rect<float> rect;		// Rect of the scrollbar
-			sf::RectangleShape shape;	// Visible shape of the scrollbar
+			sf::Rect<float> rect;
+			sf::RectangleShape shape;
 
-			Button scrollUp;			// Scroll up button
-			Button scrollDown;			// Scroll down button
-			Button thumb;				// Thumb button
+			Button scrollUp;
+			Button scrollDown;
+			Button scroll;
 
-			float thumbSize = 50.f;		// = barSize / ((lines * lineSize) / barSize)
-			float thumbPos = 0.f;		// Thumb position relative to the scrollbar
+			float barSize = 50.f;	// = boxSize / ((lines * lineSize) / boxSize)
+			float barPos = 82.5f;
 
 			ScrollBar();
 
-			/**
-			 *	@brief Updates the size of the thumb
-			 *	@param lines Number of lines in the textbox
-			 */
 			void updateSize(int lines);
-			/**
-			 *	@brief Updates position of the thumb
-			 */
 			void updatePos();
 
 		private:
 			void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 		};
-		ScrollBar scrollbar;			// The textbox's scrollbar
+		ScrollBar scrollbar;
 
-		struct CommandText : Drawable
+		struct SelOption : sf::Drawable
 		{
-			sf::Rect<float> rect;		// Rect of the command text
-			sf::RectangleShape shape;	// Shape of the command
-			sf::Text text;				// Text describing the command
+			sf::Rect<float> rect;
+			sf::RectangleShape shape;
+			sf::Text text;
 
-			CommandText();
+			SelOption();
 
 		private:
 			void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 		};
-		std::vector<CommandText> options;
+		std::vector<SelOption> options;
 
-		CommandList();
+		Select();
 
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 	};
-	CommandList commandList;			// The command list, conatining the commands in text
+	Select commandList;
 
-	sf::RenderWindow window;			// The main Scripting UI window
+	sf::RenderWindow window;
 
 	class Add
 	{
-		sf::RenderWindow window;		// The "Add Command" subwindow
-		std::vector<Button> buttons;	// All the buttons for the subwindow
+		sf::RenderWindow window;
+		std::vector<Button> buttons;
 
 	public:
 		Add();
 
-		// Main loop for the subwindow
 		Command::CommandType run();
-		// Handles mouse clicks in the subwindow
+
 		Button::ButtonType handleClick(sf::Vector2i pos);
 	};
-	Add add;							// The "Add Command" subwindow
+	Add add;
 	class Edit
 	{
-		sf::RenderWindow window;		// The "Edit Command" subwindow
-		std::vector<Button> buttons;	// All the buttons for the subwindow
+		sf::RenderWindow window;
+		std::vector<Button> buttons;
+
+
 		
 	public:
 		Edit();
 
-		/**
-		 *	@brief The main loop of the Edit subwindow.
-		 *	@n To be used for new, empty commands.
-		 *	@param ID ID of the command to be edited
-		 *	@param type Type of command to be edited
-		 */
 		Command run(int ID, Command::CommandType type);
-		/**
-		*	@brief The main loop of the Edit subwindow.
-		*	@n To be used for existing commands.
-		*	@param ID ID of the command to be edited
-		*	@param com The command to be edited
-		*/
 		Command run(int ID, Command com);
 	};
-	Edit edit;							// The "Edit Command" subwindow
+	Edit edit;
 	class File
 	{
 		
 	public:
 		File();
 	};
-	//File file;						// The (unimplemented) "Open/Save File" subwindow
+	//File file;
 	class Config
 	{
 		
 	public:
 		Config();
 	};
-	//Config config;					// The (unimplemented) "Configuration" subwindow
+	//Config config;
 
 public:
 
 	ScriptUI();
 
-	// The main loop of the main window.
 	void run();
 
-	// Handles mouse clicks in the window
 	Button::ButtonType handleClick(sf::Vector2i pos);
 
 };
+
+/*
+class ScriptUI
+{
+struct Button
+{
+enum ButtonType
+{
+NOBUTTON,
+
+NEW,
+LOAD,
+SAVE,
+SAVEAS,
+
+CONFIG,
+
+ADD,
+REMOVE,
+EDIT,
+MOVEUP,
+MOVEDOWN,
+
+RUN,
+
+SCROLLUP,
+SCROLLDOWN,
+
+
+ADDPORTRAIT,
+ADDDIALOGUE,
+ADDWAIT,
+ADDBGM,
+ADDSE,
+ADDANIMATION,
+ADDCAMERA,
+ADDTRANSITION,
+ADDBACKGROUND,
+ADDPICTURE
+};
+ButtonType type;
+
+Button(ButtonType type, sf::Vector2f pos, sf::Vector2f size, std::string filename = "");
+
+sf::RectangleShape shape;
+sf::Rect<float> rect;
+sf::Texture texture;
+sf::Sprite sprite;
+};
+std::vector<Button> buttons;
+std::vector<Button> addButtons;
+
+class Editor;
+
+std::vector<Button> editButtons;
+
+public:
+ScriptUI();
+
+void createWindow();
+void closeWindow();
+void showWindow();
+void hideWindow();
+
+void addCommand();
+void editCommand(int selected);
+void editCommand(Button::ButtonType type);
+
+void run();
+
+private:
+sf::RenderWindow window;
+sf::RenderWindow addWindow;
+sf::RenderWindow editWindow;
+
+struct Textbox : sf::Drawable
+{
+	struct Command : Drawable
+	{
+		enum CommandType
+		{
+			NOTYPE,
+			PORTRAIT,
+			DIALOGUE
+		};
+
+		Command();
+		explicit Command(CommandType type);
+		void add(std::string text);
+		void edit();
+
+	private:
+		CommandType type;
+		std::vector<std::string> args;
+
+		std::string display;
+
+		int num;
+
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+};
+std::vector<Command> commands;
+
+sf::RectangleShape shape;
+struct ScrollBar : Drawable
+{
+	std::vector<sf::Rect<float>> rects;
+	std::vector<sf::RectangleShape> shapes;
+
+	float barSize = 50.f;	// = 412.5f / ((lines * 18.f) / 412.5f)
+	float barPos = 82.5f;
+
+	void updateSize(int lines);
+	void updatePos();
+
+private:
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+};
+ScrollBar scrollbar;
+
+void updateScroll();
+
+void addCommand(Command::CommandType type);
+
+private:
+sf::View view;
+
+void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+};
+Textbox textbox;
+
+
+Button::ButtonType handleClick(sf::Vector2i pos);
+
+};
+*/
