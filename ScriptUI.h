@@ -10,36 +10,36 @@ class ScriptUI
 	{
 		enum ButtonType
 		{
-			NOBUTTON,					// Null value
-			NEWBUTTON,					// New file
-			OPENBUTTON,					// Open file
-			SAVEBUTTON,					// Save file
-			SAVEASBUTTON,				// Save file as
-			CONFIGBUTTON,				// Configure program/file
+			NOBUTTON,			// Null value
+			NEWBUTTON,			// New file
+			OPENBUTTON,			// Open file
+			SAVEBUTTON,			// Save file
+			SAVEASBUTTON,			// Save file as
+			CONFIGBUTTON,			// Configure program/file
 
-			ADDBUTTON,					// Add script action
-			REMOVEBUTTON,				// Remove selected action
-			EDITBUTTON,					// Edit selected action
-			UPBUTTON,					// Move selected action up
-			DOWNBUTTON,					// Move selected action down
+			ADDBUTTON,			// Add script action
+			REMOVEBUTTON,			// Remove selected action
+			EDITBUTTON,			// Edit selected action
+			UPBUTTON,			// Move selected action up
+			DOWNBUTTON,			// Move selected action down
 
-			RUNBUTTON,					// Run the current script
+			RUNBUTTON,			// Run the current script
 
-			SCROLLUPBUTTON,				// Scroll the textbox up
-			SCROLLDOWNBUTTON,			// Scroll the textbox down
+			SCROLLUPBUTTON,			// Scroll the textbox up
+			SCROLLDOWNBUTTON,		// Scroll the textbox down
 
 
-			ADDPORTRAIT,				// Add portrait action
-			ADDDIALOGUE					// Add dialogue action
+			ADDPORTRAIT,			// Add portrait action
+			ADDDIALOGUE			// Add dialogue action
 		};
-		ButtonType type;						// What the button does when pressed
+		ButtonType type;		// What the button does when pressed
 
-		sf::RectangleShape shape;				// Visual rectangle
-		sf::Rect<float> rect;					// Mouse-detection rectangle
-		sf::Texture texture;					// Texture for shape
+		sf::RectangleShape shape;	// Visual rectangle
+		sf::Rect<float> rect;		// Mouse-detection rectangle
+		sf::Texture texture;		// Texture for shape
 
-		sf::Vector2f pos;						// Position of the button
-		sf::Vector2f size;						// Size of the button
+		sf::Vector2f pos;		// Position of the button
+		sf::Vector2f size;		// Size of the button
 
 		/**
 		 *	@brief Constructor
@@ -59,7 +59,7 @@ class ScriptUI
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 	};
-	std::vector<Button> buttons;		// All buttons on the main window
+	std::vector<Button> buttons;	// All buttons on the main window
 
 	struct Command
 	{
@@ -70,12 +70,12 @@ class ScriptUI
 			DIALOGUE		// Dialogue action
 			//...
 		};
-		CommandType type;			// What the command will do
+		CommandType type;	// What the command will do
 
-		int ID;						// ID of the command (position on the list)
+		int ID;			// ID of the command (position on the list)
 
-		sf::Rect<float> rect;		// Rect for detecting mouse clicks for selection
-		sf::Text text;				// Text to be displayed in the main window for this command
+		sf::Rect<float> rect;	// Rect for detecting mouse clicks for selection
+		sf::Text text;		// Text to be displayed in the main window for this command
 
 		/**
 		 *	@brief Constructor
@@ -89,24 +89,24 @@ class ScriptUI
 		 */
 		void edit();
 	};
-	std::vector<Command> commands;		// All the commands written
+	std::vector<Command> commands;	// All the commands written
 
 
 	struct CommandList : sf::Drawable
 	{
-		int selected;					// ID of the selection (-1 if none)
+		int selected;			// ID of the selection (-1 if none)
 
-		sf::Rect<float> rect;			// Rect of the textbox
-		sf::RectangleShape shape;		// Visible shape of the textbox
+		sf::Rect<float> rect;		// Rect of the textbox
+		sf::RectangleShape shape;	// Visible shape of the textbox
 
 		struct ScrollBar : Drawable
 		{
 			sf::Rect<float> rect;		// Rect of the scrollbar
 			sf::RectangleShape shape;	// Visible shape of the scrollbar
 
-			Button scrollUp;			// Scroll up button
-			Button scrollDown;			// Scroll down button
-			Button thumb;				// Thumb button
+			Button scrollUp;		// Scroll up button
+			Button scrollDown;		// Scroll down button
+			Button thumb;			// Thumb button
 
 			float thumbSize = 50.f;		// = barSize / ((lines * lineSize) / barSize)
 			float thumbPos = 0.f;		// Thumb position relative to the scrollbar
@@ -126,13 +126,13 @@ class ScriptUI
 		private:
 			void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 		};
-		ScrollBar scrollbar;			// The textbox's scrollbar
+		ScrollBar scrollbar;		// The textbox's scrollbar
 
 		struct CommandText : Drawable
 		{
 			sf::Rect<float> rect;		// Rect of the command text
 			sf::RectangleShape shape;	// Shape of the command
-			sf::Text text;				// Text describing the command
+			sf::Text text;			// Text describing the command
 
 			CommandText();
 
@@ -146,13 +146,13 @@ class ScriptUI
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 	};
-	CommandList commandList;			// The command list, conatining the commands in text
+	CommandList commandList;	// The command list, conatining the commands in text
 
-	sf::RenderWindow window;			// The main Scripting UI window
+	sf::RenderWindow window;	// The main Scripting UI window
 
 	class Add
 	{
-		sf::RenderWindow window;		// The "Add Command" subwindow
+		sf::RenderWindow window;	// The "Add Command" subwindow
 		std::vector<Button> buttons;	// All the buttons for the subwindow
 
 	public:
@@ -163,10 +163,10 @@ class ScriptUI
 		// Handles mouse clicks in the subwindow
 		Button::ButtonType handleClick(sf::Vector2i pos);
 	};
-	Add add;							// The "Add Command" subwindow
+	Add add;			// The "Add Command" subwindow
 	class Edit
 	{
-		sf::RenderWindow window;		// The "Edit Command" subwindow
+		sf::RenderWindow window;	// The "Edit Command" subwindow
 		std::vector<Button> buttons;	// All the buttons for the subwindow
 		
 	public:
@@ -187,21 +187,21 @@ class ScriptUI
 		*/
 		Command run(int ID, Command com);
 	};
-	Edit edit;							// The "Edit Command" subwindow
+	Edit edit;			// The "Edit Command" subwindow
 	class File
 	{
 		
 	public:
 		File();
 	};
-	//File file;						// The (unimplemented) "Open/Save File" subwindow
+	//File file;			// The (unimplemented) "Open/Save File" subwindow
 	class Config
 	{
 		
 	public:
 		Config();
 	};
-	//Config config;					// The (unimplemented) "Configuration" subwindow
+	//Config config;		// The (unimplemented) "Configuration" subwindow
 
 public:
 
