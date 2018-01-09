@@ -1,5 +1,6 @@
 #include "ScriptUI.h"
 
+/*
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -7,10 +8,11 @@
 #include <string>
 
 namespace fs = std::experimental::filesystem;
+*/
 
 int main()
 {
-	/*
+	/*	FILE SEARCH TEST
 	std::ostringstream oss;
 	auto path = fs::current_path();
 	oss << path << "\\portraits\\";
@@ -33,9 +35,8 @@ int main()
 	system("pause");
 	*/
 
-	ScriptUI sui;
-	//sui.createWindow();
 
+	ScriptUI sui;
 	sui.run();
 
 	return 0;
