@@ -158,6 +158,7 @@
     <ClCompile Include="ScriptUI.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Playback.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScriptUI.h" />
   </ItemGroup>

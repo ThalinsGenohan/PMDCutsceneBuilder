@@ -1,5 +1,4 @@
 #include "ScriptUI.h"
-#include <iostream>
 
 int gcd(float a, float b)
 {
@@ -19,9 +18,6 @@ int gcd(float a, float b)
 
 int main()
 {
-
-
-
 	ScriptUI sui;
 	sui.run();
 

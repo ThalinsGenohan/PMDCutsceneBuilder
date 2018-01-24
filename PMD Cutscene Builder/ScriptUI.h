@@ -10,8 +10,6 @@ namespace fs = std::experimental::filesystem;
 
 class ScriptUI
 {
-	sf::Font font;
-
 	struct Button : sf::Drawable
 	{
 		enum ButtonType
@@ -85,15 +83,14 @@ class ScriptUI
 
 		int ID;						// ID of the command (position on the list)
 
-		sf::Rect<float> rect;		// Rect for detecting mouse clicks for selection
-		sf::Text text;				// Text to be displayed in the main window for this command
+		std::string com;
 
 		/**
 		 *	@brief Constructor
 		 *	@param ID ID of the command (position on the list)
 		 *	@param type What the command will do
 		 */
-		explicit Command(int ID, CommandType type);
+		explicit Command(int ID, CommandType type, std::string com);
 
 		/**
 		 *	@brief Pulls up the editing window for the command
@@ -101,7 +98,6 @@ class ScriptUI
 		void edit();
 	};
 	std::vector<Command> commands;		// All the commands written
-
 
 	struct CommandList : sf::Drawable
 	{
@@ -152,13 +148,20 @@ class ScriptUI
 			sf::Text text;				// Text describing the command
 
 			CommandText();
+			explicit CommandText(Command com);
+
+			void setPosition(sf::Vector2f pos);
 
 		private:
 			void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 		};
-		std::vector<CommandText> options;
+		std::vector<CommandText> commandTexts;
 
 		CommandList();
+
+		void handleScroll(float mouse, sf::Vector2f initial);
+
+		void addCommand(Command com);
 
 	private:
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -183,8 +186,6 @@ class ScriptUI
 	Add add;							// The "Add Command" subwindow
 	class Edit
 	{
-		sf::Font font;
-
 		sf::RenderWindow window;		// The "Edit Command" subwindow
 		std::vector<Button> buttons;	// All the buttons for the subwindow
 
@@ -197,6 +198,34 @@ class ScriptUI
 				FILESELECTOPTION
 			};
 			OptionType type;
+
+
+			struct Radio : Drawable
+			{
+
+				sf::Rect<float> rect;
+				sf::CircleShape shape;
+				std::string str;
+				sf::Text text;
+
+				sf::Vector2f pos;
+				float size;
+
+				bool selected;
+
+				Radio(sf::Vector2f pos, float size, std::string text);
+
+			private:
+				void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
+			};
+			std::vector<Radio> radios;
+
+			int selected;
+			std::string str;
+
+
+			Option();
+			explicit Option(OptionType type);
 
 			virtual void hover(sf::Vector2f mouse) {}
 
@@ -215,28 +244,6 @@ class ScriptUI
 		};
 		struct RadioOption : Option
 		{
-			struct Radio : Drawable
-			{
-
-				sf::Rect<float> rect;
-				sf::CircleShape shape;
-				sf::Font font;
-				sf::Text text;
-
-				sf::Vector2f pos;
-				float size;
-
-				bool selected;
-
-				Radio(sf::Vector2f pos, float size, std::string text);
-
-			private:
-				void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-			};
-			std::vector<Radio> radios;
-
-			int selected;
-
 			RadioOption();
 			explicit RadioOption(std::vector<Radio> radios);
 
@@ -305,7 +312,6 @@ class ScriptUI
 
 				sf::Rect<float> rect;
 				sf::RectangleShape shape;
-				sf::Font font;
 				sf::Text text;
 
 				int fontHeight;
@@ -386,4 +392,6 @@ public:
 	// Handles mouse clicks in the window
 	Button::ButtonType handleClick(sf::Vector2i pos);
 
+	// Adds a command to the command list and command vector
+	void addCommand(Command com);
 };

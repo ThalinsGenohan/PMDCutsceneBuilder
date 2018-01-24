@@ -12,6 +12,17 @@
 
 namespace fs = std::experimental::filesystem;
 
+sf::Font font;
+
+void init()
+{
+	if (!font.loadFromFile("wondermail.ttf"))
+	{
+		std::cerr << "[ERROR] Unable to load font \"wondermail.ttf\".";
+		system("pause");
+	}
+}
+
 std::wstring s2ws(const std::string& s)
 {
 	const auto slength = int(s.length()) + 1;
@@ -92,10 +103,11 @@ void ScriptUI::Button::draw(sf::RenderTarget& target, sf::RenderStates states) c
 
 
 // COMMAND
-ScriptUI::Command::Command(int ID, CommandType type)
+ScriptUI::Command::Command(int ID, CommandType type, std::string com)
 {
 	this->ID = ID;
 	this->type = type;
+	this->com = com;
 }
 // ReSharper disable once CppMemberFunctionMayBeConst
 void ScriptUI::Command::edit()
@@ -123,21 +135,63 @@ ScriptUI::CommandList::CommandList() :
 {
 	shape.setPosition(rect.left, rect.top);
 }
+void ScriptUI::CommandList::handleScroll(float mouse, sf::Vector2f initial)
+{
+	const auto prevThumb = scrollbar.thumbPos;
+
+	if (scrollbar.thumb.rect.contains(initial))
+	{
+		scrollbar.updatePos(mouse - initial.y);
+	}
+
+	auto scrollRatio = 0.f;
+
+	if (float(commandTexts.size()) * fontHeight - rect.height > 0)
+	{
+		scrollRatio = (float(commandTexts.size()) * fontHeight + 2.f - rect.height) / (scrollbar.rect.height - scrollbar.thumb.rect.height);
+	}
+
+	for (auto l = 0; l < int(commandTexts.size()); l++)
+	{
+		commandTexts[l].setPosition({ commandTexts[l].text.getPosition().x,
+			commandTexts[l].text.getPosition().y +
+			scrollRatio *
+			(prevThumb - scrollbar.thumbPos) });
+	}
+}
+void ScriptUI::CommandList::addCommand(Command com)
+{
+	// ReSharper disable once CppNonReclaimedResourceAcquisition
+	commandTexts.push_back(*new CommandText(com));
+
+	commandTexts[int(commandTexts.size()) - 1].setPosition({ 0.f, 63.f + 21.f * (float(commandTexts.size()) - 1.f) });
+}
 void ScriptUI::CommandList::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
 	target.draw(shape, states);
-	for (auto l = 0; l < int(options.size()); l++)
+	for (auto l = 0; l < int(commandTexts.size()); l++)
 	{
-		target.draw(options[l]);
+		target.draw(commandTexts[l], states);
 	}
 	target.draw(scrollbar);
 }
 
 
 // COMMANDTEXT
-ScriptUI::CommandList::CommandText::CommandText()
+ScriptUI::CommandList::CommandText::CommandText(Command com)
 {
+	text.setFont(font);
+	text.setFillColor(sf::Color::Black);
+	text.setString(com.com);
 
+	shape.setSize({ 21.f, 475.f });
+}
+void ScriptUI::CommandList::CommandText::setPosition(sf::Vector2f pos)
+{
+	text.setPosition(pos);
+	shape.setPosition({ pos.x - 6.f, pos.y + 13.f });
+	rect.left = pos.x - 6.f + 1.f;
+	rect.top = pos.y + 13.f + 1.f;
 }
 void ScriptUI::CommandList::CommandText::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
@@ -152,7 +206,7 @@ ScriptUI::CommandList::ScrollBar::ScrollBar() :
 	scrollUp(Button::SCROLLUPBUTTON, {480.f, 62.5f}, {20.f, 20.f}, ""),
 	scrollDown(Button::SCROLLDOWNBUTTON, {480.f, 455.f}, {20.f, 20.f}, ""),
 	thumb(Button::SCROLLTHUMBBUTTON, {480.f, 82.5f}, {20.f, thumbSize}, ""),
-	fontHeight(0) {}
+	fontHeight(21) {}
 void ScriptUI::CommandList::ScrollBar::updateSize(int lines)
 {
 	if (lines * fontHeight / rect.height >= 1.f)
@@ -211,6 +265,8 @@ void ScriptUI::CommandList::ScrollBar::draw(sf::RenderTarget& target, sf::Render
 // SCRIPTUI
 ScriptUI::ScriptUI()
 {
+	init();
+
 	// ReSharper disable CppNonReclaimedResourceAcquisition
 
 	buttons.push_back(*new Button(Button::NEWBUTTON, { 0.f, 0.f }, { 100.f, 62.5f }, "NEW"));
@@ -231,7 +287,7 @@ ScriptUI::ScriptUI()
 }
 void ScriptUI::run()
 {
-	window.create(sf::VideoMode(500, 600), "Scripting Engine Test Pre-Alpha 0.1a", sf::Style::Close | sf::Style::Titlebar);
+	window.create(sf::VideoMode(500, 600), "Scripting Engine Test Pre-Alpha", sf::Style::Close | sf::Style::Titlebar);
 
 	sf::Event sEvent;
 	auto running = true;
@@ -242,6 +298,10 @@ void ScriptUI::run()
 
 	// ReSharper disable once CppJoinDeclarationAndAssignment
 	Command::CommandType comAct;
+
+	auto mouseHeld = false;
+	sf::Vector2f mouseClick;
+	auto prevClick = 0.f;
 
 	while(running)
 	{
@@ -264,6 +324,13 @@ void ScriptUI::run()
 
 			while(window.pollEvent(sEvent))
 			{
+				if (mouseHeld)
+				{
+					if (sEvent.mouseButton.y == -858993460)
+						commandList.handleScroll(float(sEvent.mouseMove.y), { mouseClick.x, prevClick });
+					prevClick = float(sEvent.mouseMove.y);
+				}
+
 				switch(sEvent.type)
 				{
 				case sf::Event::MouseButtonPressed:
@@ -289,7 +356,7 @@ void ScriptUI::run()
 						comAct = add.run();
 						if (comAct != Command::NOCOMMAND)
 						{
-							edit.run(int(commands.size()), comAct);
+							addCommand(edit.run(int(commands.size()), comAct));
 						}
 						break;
 					case Button::REMOVEBUTTON:
@@ -328,6 +395,11 @@ void ScriptUI::run()
 					default:
 						break;
 					}
+					mouseHeld = true;
+					mouseClick = { float(sEvent.mouseButton.x), float(sEvent.mouseButton.y) };
+					break;
+				case sf::Event::MouseButtonReleased:
+					mouseHeld = false;
 					break;
 
 				case sf::Event::Closed:
@@ -346,7 +418,7 @@ void ScriptUI::run()
 			}
 		}
 
-		commandList.scrollbar.updateSize(commands.size());
+		commandList.scrollbar.updateSize(int(commands.size()));
 
 		window.clear(sf::Color::Blue);
 		window.draw(commandList);
@@ -356,6 +428,11 @@ void ScriptUI::run()
 		}
 		window.display();
 	}
+}
+void ScriptUI::addCommand(Command com)
+{
+	commands.push_back(com);
+	commandList.addCommand(com);
 }
 ScriptUI::Button::ButtonType ScriptUI::handleClick(sf::Vector2i pos)
 {
@@ -446,14 +523,14 @@ ScriptUI::Button::ButtonType ScriptUI::Add::handleClick(sf::Vector2i pos)
 
 
 // OPTION
-
+ScriptUI::Edit::Option::Option(): type(), selected(0) {}
 
 // RADIO
 ScriptUI::Edit::RadioOption::Radio::Radio(sf::Vector2f pos, float size, std::string text) : selected(false)
 {
 	this->pos = pos;
 	this->size = size;
-	
+	this->str = text;
 
 	rect.left = pos.x;
 	rect.top = pos.y;
@@ -464,11 +541,6 @@ ScriptUI::Edit::RadioOption::Radio::Radio(sf::Vector2f pos, float size, std::str
 	shape.setFillColor(sf::Color::White);
 	shape.setOutlineColor(sf::Color::Black);
 	shape.setOutlineThickness(1.f);
-	if (!font.loadFromFile("wondermail.ttf"))
-	{
-		std::cout << "[ERROR] Unable to load font \"wondermail.ttf\".";
-		system("pause");
-	}
 	this->text.setFont(font);
 	this->text.setCharacterSize(30);
 	this->text.setFillColor(sf::Color::Black);
@@ -482,13 +554,21 @@ void ScriptUI::Edit::RadioOption::Radio::draw(sf::RenderTarget& target, sf::Rend
 }
 
 // RADIOOPTION
-ScriptUI::Edit::RadioOption::RadioOption() : selected(0) {}
-ScriptUI::Edit::RadioOption::RadioOption(std::vector<Radio> radios) : selected(0)
+ScriptUI::Edit::RadioOption::RadioOption()
 {
+	type = RADIOOPTION;
+	selected = 0;
+}
+ScriptUI::Edit::RadioOption::RadioOption(std::vector<Radio> radios)
+{
+	type = RADIOOPTION;
+	selected = 0;
+
 	this->radios = radios;
 	this->radios[0].selected = true;
 	this->radios[0].shape.setFillColor(sf::Color::Black);
 }
+
 void ScriptUI::Edit::RadioOption::init(std::vector<Radio> radios)
 {
 	selected = 0;
@@ -780,14 +860,12 @@ void ScriptUI::Edit::FileSelect::ScrollBar::draw(sf::RenderTarget& target, sf::R
 // FILE
 ScriptUI::Edit::FileSelect::File::File() : ID(-1), selected(false), fontHeight(0)
 {
-	font.loadFromFile("wondermail.ttf");
 	text.setFont(font);
 }
 ScriptUI::Edit::FileSelect::File::File(std::string str, sf::Vector2f pos, int fontHeight) : ID(-1), selected(false), fontHeight(fontHeight)
 {
 	filename = str;
 
-	font.loadFromFile("wondermail.ttf");
 	text.setFont(font);
 	text.setString(str);
 	text.setFillColor(sf::Color::Black);
@@ -828,8 +906,6 @@ void ScriptUI::Edit::FileSelect::File::draw(sf::RenderTarget& target, sf::Render
 // EDIT
 ScriptUI::Edit::Edit()
 {
-	font.loadFromFile("wondermail.ttf");
-
 	buttons.push_back(*new Button(Button::EDITCANCEL, { 0.f, 225.f }, { 200.f, 75.5f }, "EDITCANCEL"));
 	buttons.push_back(*new Button(Button::EDITACCEPT, { 200.f, 225.f }, { 200.f, 75.5f }, "EDITACCEPT"));
 }
@@ -844,6 +920,9 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command::CommandType type)
 
 	std::vector<sf::Text> text;
 	std::vector<Option*> options;
+
+	std::string comStr = "";
+	std::ostringstream oComStr;
 
 	switch (type)
 	{
@@ -877,15 +956,13 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command::CommandType type)
 		options.push_back(new FileSelect({ 150.f, 35.f }, { 120.f, 180.f }, path.str()));
 		options.push_back(new FileSelect({ 270.f, 35.f }, { 120.f, 180.f }, path.str()));
 
-		
-
 		break;
 	case Command::DIALOGUE:
 
 		break;
 
 	default:
-		return *new Command(0, Command::NOCOMMAND);
+		return *new Command(0, Command::NOCOMMAND, "");
 	}
 
 	auto accept = false;
@@ -893,6 +970,8 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command::CommandType type)
 	auto mouseHeld = false;
 	sf::Vector2f mouseClick;
 	auto prevClick = 0.f;
+
+	std::string tempStr[2] = { "", "" };
 
 	while (running)
 	{
@@ -919,10 +998,19 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command::CommandType type)
 				for (auto l = 0; l < int(options.size()); l++)
 				{
 					dir = options[l]->handleClick({ float(eEvent.mouseButton.x), float(eEvent.mouseButton.y) });
-					if (dir != "" && l < int(options.size() - 1))
+					if (dir != "")
 					{
-						oss << path.str() << dir << "\\";
-						options[l + 1]->setDirectory(oss.str(), dir);
+						if (l < int(options.size() - 1))
+						{
+							oss << path.str() << dir << "\\";
+							options[l + 1]->setDirectory(oss.str(), dir);
+
+							tempStr[0] = dir;
+						}
+						else
+						{
+							tempStr[1] = dir;
+						}
 					}
 				}
 				for (auto l = 0; l < int(buttons.size()); l++)
@@ -959,7 +1047,6 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command::CommandType type)
 		{
 			buttons[l].hover(sf::Vector2f(sf::Mouse::getPosition(window)));
 		}
-
 		for (auto l = 0; l < int(options.size()); l++)
 		{
 			if (options[l]->type == Option::FILESELECTOPTION)
@@ -967,6 +1054,8 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command::CommandType type)
 				options[l]->hover(sf::Vector2f(sf::Mouse::getPosition(window)));
 			}
 		}
+
+
 
 		window.clear(sf::Color::White);
 		for (auto l = 0; l < int(options.size()); l++)
@@ -984,13 +1073,40 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command::CommandType type)
 		window.display();
 	}
 
+	switch (type)
+	{
+	case Command::PORTRAIT:
+		oComStr << "@" << options[0]->selected << " " << tempStr[0] << tempStr[1] << " ";
+		switch (options[1]->selected)
+		{
+		case 0:
+			oComStr << "left";
+			break;
+		case 1:
+			oComStr << "right";
+			break;
+		case 2:
+			oComStr << "topleft";
+			break;
+		case 3:
+			oComStr << "topright";
+			break;
+		default:
+			break;
+		}
+		break;
+	case Command::DIALOGUE:
+		break;
+	default:;
+	}
+	
 
 	window.close();
 	if (accept)
 	{
-		return *new Command(ID, type);
+		return *new Command(ID, type, oComStr.str());
 	}
-	return *new Command(-1, Command::NOCOMMAND);
+	return *new Command(-1, Command::NOCOMMAND, "");
 }
 // ReSharper disable once CppMemberFunctionMayBeStatic
 // ReSharper disable once CppParameterNeverUsed
@@ -1007,10 +1123,10 @@ ScriptUI::Command ScriptUI::Edit::run(int ID, Command com)
 		break;
 
 	default:
-		return *new Command(0, Command::NOCOMMAND);
+		return *new Command(0, Command::NOCOMMAND, "");
 	}
 
-	return *new Command(0, Command::NOCOMMAND);
+	return *new Command(0, Command::NOCOMMAND, "");
 }
 
 ScriptUI::Button::ButtonType ScriptUI::Edit::handleClick(sf::Vector2i pos)
